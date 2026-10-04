@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Mobile viewport lock -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Do You Love Me?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      background-color: #242424;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* --- FULL-SCREEN VIDEO BACKGROUND --- */
+    #bgVideo {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: 0;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+      filter: brightness(0.75); /* Darkens video slightly for better card visibility */
+    }
+
+    .celebration {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    body.celebrating .celebration {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .firework {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 -52px #ffd166, 37px -37px #fff, 52px 0 #ff4d6d,
+        37px 37px #fff, 0 52px #ffd166, -37px 37px #ff4d6d,
+        -52px 0 #fff, -37px -37px #ffd166;
+      opacity: 0;
+      animation: firework-burst 2.6s ease-out infinite;
+    }
+
+    .firework-one {
+      top: 9%;
+      left: 3%;
+    }
+
+    .firework-two {
+      top: 54%;
+      right: 3%;
+      animation-delay: 0.85s;
+    }
+
+    .firework-three {
+      bottom: 5%;
+      left: 14%;
+      animation-delay: 1.6s;
+    }
+
+    @keyframes firework-burst {
+      0%, 100% { opacity: 0; transform: scale(0.12); }
+      12% { opacity: 1; }
+      48% { opacity: 0; transform: scale(1.2); }
+    }
+
+    #celebrationCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      mix-blend-mode: screen;
+    }
+
+    .effect-source {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* --- MOBILE-OPTIMIZED CARD --- */
+    .card {
+      background: rgba(255, 255, 255, 0.85); /* Semi-transparent glass effect */
+      backdrop-filter: blur(10px);
+      padding: 25px 20px;
+      border-radius: 24px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      width: 85%;
+      max-width: 350px; /* Perfect width for mobile screens */
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .gif-container img {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      border-radius: 12px;
+    }
+
+    h1 {
+      color: #ff3366;
+      font-size: 22px;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      color: #4a4a4a;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    /* --- BUTTONS AREA --- */
+    .buttons-wrapper {
+      position: relative;
+      width: 100%;
+      height: 60px;
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    button {
+      padding: 12px 28px;
+      font-size: 16px;
+      border: none;
+      border-radius: 30px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    #yesBtn {
+      background: linear-gradient(135deg, #ff4d6d, #ff758f);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 77, 109, 0.4);
+    }
+
+    #noBtn {
+      background-color: #f0f0f0;
+      color: #333;
+      transition: all 0.15s ease-out;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #editTextBtn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 3;
+      padding: 10px 16px;
+      background: white;
+      color: #333;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      font-size: 14px;
+    }
+
+    #textEditor {
+      width: min(440px, calc(100% - 32px));
+      max-height: 90vh;
+      margin: auto;
+      padding: 24px;
+      overflow-y: auto;
+      border: 0;
+      border-radius: 14px;
+      color: #333;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    #textEditor::backdrop {
+      background: rgba(20, 20, 20, 0.55);
+      backdrop-filter: blur(3px);
+    }
+
+    #textEditor h2 {
+      margin-bottom: 18px;
+      font-size: 20px;
+    }
+
+    .edit-field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .edit-field label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .edit-field input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font: inherit;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .dialog-actions button {
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+
+    #saveTextBtn {
+      background: #ff4d6d;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BACKGROUND VIDEO: Replace video.mp4 with your video file link -->
+  <video autoplay loop muted playsinline id="bgVideo">
+    <source src="autumn-cats-at-sunset.1920x1080.mp4" type="video/mp4">
+  </video>
+
+  <div class="celebration" aria-hidden="true">
+    <span class="firework firework-one"></span>
+    <span class="firework firework-two"></span>
+    <span class="firework firework-three"></span>
+    <canvas id="celebrationCanvas"></canvas>
+    <video class="effect-source" id="firecrackerVideo" muted loop playsinline preload="auto">
+      <source src="fire%20cracker.mp4" type="video/mp4">
+    </video>
+    <video class="effect-source" id="petalVideo" muted loop playsinline preload="auto">
+      <source src="33409-396631690_medium.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <button type="button" id="editTextBtn">Edit text</button>
+
+  <!-- MAIN MOBILE CONTENT -->
+  <div class="card" id="mainCard">
+    <div class="gif-container">
+      <img id="mainGif" src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWF0ZmRqdTRkbzhqNjY2NGRncmxybzJsZTlwNjl4dnBidWYzb3psbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/aCSURh6OnUyXdOuYcq/giphy.gif" alt="Cute Animal">
+    </div>
+    
+    <h1 id="questionTitle">Will meow with me ? 🥺</h1>
+    <p id="subText">Billu is meowing</p>
+
+    <div class="buttons-wrapper" id="btnWrapper">
+      <button id="yesBtn" onclick="handleYes()">Yes</button>
+      <button id="noBtn">No</button>
+    </div>
+  </div>
+
+  <dialog id="textEditor" aria-labelledby="textEditorTitle">
+    <form id="textEditorForm">
+      <h2 id="textEditorTitle">Edit text</h2>
+      <div class="edit-field">
+        <label for="questionInput">Opening question</label>
+        <input id="questionInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="messageInput">Opening message</label>
+        <input id="messageInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="yesButtonInput">Yes button</label>
+        <input id="yesButtonInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="noButtonInput">No button</label>
+        <input id="noButtonInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="successTitleInput">After clicking Yes: title</label>
+        <input id="successTitleInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="successMessageInput">After clicking Yes: message</label>
+        <input id="successMessageInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="noTitleInput">Aww, are you sure? title</label>
+        <input id="noTitleInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="noMessageInput">Aww, are you sure? message</label>
+        <input id="noMessageInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="noEndingTitleInput">No ending: title</label>
+        <input id="noEndingTitleInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="noEndingMessageInput">No ending: message</label>
+        <input id="noEndingMessageInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="sureTitleInput">Are you sure? title</label>
+        <input id="sureTitleInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="sureMessageInput">Are you sure? message</label>
+        <input id="sureMessageInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="followupQuestionInput">Follow-up question</label>
+        <input id="followupQuestionInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="followupMessageInput">Follow-up message</label>
+        <input id="followupMessageInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="finalQuestionTitleInput">Final question: title</label>
+        <input id="finalQuestionTitleInput" type="text" required>
+      </div>
+      <div class="edit-field">
+        <label for="finalQuestionMessageInput">Final question: message</label>
+        <input id="finalQuestionMessageInput" type="text" required>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="cancelTextBtn">Cancel</button>
+        <button type="submit" id="saveTextBtn">Save changes</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const noBtn = document.getElementById('noBtn');
+    const textEditor = document.getElementById('textEditor');
+    const textFieldNames = ['question', 'message', 'yesButton', 'noButton', 'successTitle', 'successMessage', 'noTitle', 'noMessage', 'noEndingTitle', 'noEndingMessage', 'sureTitle', 'sureMessage', 'followupQuestion', 'followupMessage', 'finalQuestionTitle', 'finalQuestionMessage'];
+    const defaultCopy = {
+      question: 'Will meow with me ? 🥺',
+      message: 'billu is meowing',
+      yesButton: 'Yes',
+      noButton: 'No',
+      successTitle: 'BILLU alway knew you will choose yes you ungreatful Panda 😼💐 ',
+      successMessage: 'Lets mew together and make the world a better place for cats and pandas alike! 🐱🐼',
+      noTitle: 'Aww, are you sure? 😿',
+      noMessage: 'Billu will keep meowing for you!',
+      noEndingTitle: 'Aww, Billu will miss you 😿',
+      noEndingMessage: 'Maybe you will change your mind and choose yes!',
+      sureTitle: 'Are you sure? 😿',
+      sureMessage: 'Billu is giving you one more chance!',
+      followupQuestion: 'One more question... will you stay with Billu? 🥺',
+      followupMessage: 'Choose again!',
+      finalQuestionTitle: 'You ungrateful potato, you have no choice. Now...😒',
+      finalQuestionMessage: 'Will you be with Billu forever and meow with me?',
+    };
+    let copy = { ...defaultCopy };
+    let response = 'opening';
+    const openingGif = document.getElementById('mainGif').src;
+    const otherGif = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1eHN3YmNhbnhydTN3OTJub3kydmtpd3dtcWw1NnlsODJvOWR2NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/L3X9GvpmP98PQZfoLI/giphy.gif';
+    const sureGif = 'https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3bXU3aXN1amI0eDZzbHEwbmN0MGNxZmU1ejZnY2F3ZHJleWMycXBiYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ZJieMJ372LLjXsInfV/giphy.gif';
+    const awwGif = 'https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3bXU3aXN1amI0eDZzbHEwbmN0MGNxZmU1ejZnY2F3ZHJleWMycXBiYyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/aWMJvA76tNnBR9gkpT/giphy.gif';
+    const noEndingGif = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcno5dzIwN2Fxb3I4emdkYWM2b3Bqd3F1NDB6aGdnaTdnMWk4aXptYiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/YYzpwtoDdWs77CzlVw/giphy.gif';
+    const finalQuestionGif = 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTZwbW5tcWlpODg0cG96MWdwdnY1dzZidnR0enhjeGFlN2IyZjdhaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7vGrRUwK2pAEqKZXKE/giphy.gif';
+    const yesGif = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWhvamdxYmtjZHViejQ3ams3Z3J1bTU2NG9yamE4OHlwcHlwMmcwciZlcD12MV9naWZzX3NlYXJjaCZjdD1n/FElR3ylsj6PTy/giphy.gif';
+    const celebrationCanvas = document.getElementById('celebrationCanvas');
+    const celebrationContext = celebrationCanvas.getContext('2d');
+    const effectVideos = [
+      document.getElementById('firecrackerVideo'),
+      document.getElementById('petalVideo'),
+    ];
+    const effectLayers = effectVideos.map(() => document.createElement('canvas'));
+    const effectContexts = effectLayers.map((layer) => layer.getContext('2d', { willReadFrequently: true }));
+    let celebrationRunning = false;
+    let celebrationFrame = 0;
+    let lastRenderedAt = 0;
+
+    function resizeCelebrationCanvas() {
+      const scale = Math.min(1, 1000 / Math.max(window.innerWidth, window.innerHeight));
+      const width = Math.max(1, Math.round(window.innerWidth * scale));
+      const height = Math.max(1, Math.round(window.innerHeight * scale));
+      celebrationCanvas.width = width;
+      celebrationCanvas.height = height;
+      effectLayers.forEach((layer) => {
+        layer.width = width;
+        layer.height = height;
+      });
+    }
+
+    function renderCelebration(timestamp) {
+      if (!celebrationRunning) return;
+
+      if (timestamp - lastRenderedAt >= 40) {
+        lastRenderedAt = timestamp;
+        celebrationContext.clearRect(0, 0, celebrationCanvas.width, celebrationCanvas.height);
+
+        effectVideos.forEach((video, index) => {
+          if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+
+          const layer = effectLayers[index];
+          const layerContext = effectContexts[index];
+          layerContext.clearRect(0, 0, layer.width, layer.height);
+          const scale = Math.max(layer.width / video.videoWidth, layer.height / video.videoHeight);
+          const drawWidth = video.videoWidth * scale;
+          const drawHeight = video.videoHeight * scale;
+          layerContext.drawImage(
+            video,
+            (layer.width - drawWidth) / 2,
+            (layer.height - drawHeight) / 2,
+            drawWidth,
+            drawHeight,
+          );
+
+          const frame = layerContext.getImageData(0, 0, layer.width, layer.height);
+          const pixels = frame.data;
+          for (let pixel = 0; pixel < pixels.length; pixel += 4) {
+            const red = pixels[pixel];
+            const green = pixels[pixel + 1];
+            const blue = pixels[pixel + 2];
+            const greenDominance = green - Math.max(red, blue);
+
+            if (green > 35 && greenDominance > 22) {
+              const keyStrength = Math.min(1, (greenDominance - 22) / 32);
+              pixels[pixel + 3] *= 1 - keyStrength;
+            }
+          }
+
+          layerContext.putImageData(frame, 0, 0);
+          celebrationContext.drawImage(layer, 0, 0);
+        });
+      }
+
+      celebrationFrame = requestAnimationFrame(renderCelebration);
+    }
+
+    function setCelebrationActive(active) {
+      if (celebrationRunning === active) return;
+      celebrationRunning = active;
+      document.body.classList.toggle('celebrating', active);
+
+      if (active) {
+        resizeCelebrationCanvas();
+        effectVideos.forEach((video) => video.play().catch(() => {}));
+        lastRenderedAt = 0;
+        celebrationFrame = requestAnimationFrame(renderCelebration);
+        return;
+      }
+
+      cancelAnimationFrame(celebrationFrame);
+      effectVideos.forEach((video) => {
+        video.pause();
+        video.currentTime = 0;
+      });
+      celebrationContext.clearRect(0, 0, celebrationCanvas.width, celebrationCanvas.height);
+    }
+
+    window.addEventListener('resize', resizeCelebrationCanvas);
+    const gifsByResponse = {
+      opening: openingGif,
+      sure: sureGif,
+      followup: openingGif,
+      yes: yesGif,
+      no: awwGif,
+      noEnding: noEndingGif,
+      finalQuestion: finalQuestionGif,
+    };
+
+    try {
+      const savedCopy = JSON.parse(localStorage.getItem('pandaDialogCopy') || '{}');
+      textFieldNames.forEach((name) => {
+        if (typeof savedCopy[name] === 'string' && savedCopy[name].trim()) {
+          copy[name] = savedCopy[name];
+        }
+      });
+    } catch {
+      localStorage.removeItem('pandaDialogCopy');
+    }
+
+    function applyCopy() {
+      const screens = {
+        opening: [copy.question, copy.message],
+        sure: [copy.sureTitle, copy.sureMessage],
+        followup: [copy.followupQuestion, copy.followupMessage],
+        yes: [copy.successTitle, copy.successMessage],
+        no: [copy.noTitle, copy.noMessage],
+        noEnding: [copy.noEndingTitle, copy.noEndingMessage],
+        finalQuestion: [copy.finalQuestionTitle, copy.finalQuestionMessage],
+      };
+      const [title, message] = screens[response];
+      document.getElementById('questionTitle').textContent = title;
+      document.getElementById('subText').textContent = message;
+      document.getElementById('yesBtn').textContent = copy.yesButton;
+      noBtn.textContent = copy.noButton;
+      document.getElementById('yesBtn').hidden = response === 'yes';
+      noBtn.hidden = response === 'yes' || response === 'finalQuestion';
+      document.getElementById('mainGif').src = gifsByResponse[response];
+      setCelebrationActive(response === 'yes');
+      document.title = response === 'opening' ? copy.question : title;
+    }
+
+    applyCopy();
+
+    document.getElementById('editTextBtn').addEventListener('click', () => {
+      textFieldNames.forEach((name) => {
+        document.getElementById(`${name}Input`).value = copy[name];
+      });
+      textEditor.showModal();
+    });
+
+    document.getElementById('cancelTextBtn').addEventListener('click', () => textEditor.close());
+    document.getElementById('textEditorForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      textFieldNames.forEach((name) => {
+        copy[name] = document.getElementById(`${name}Input`).value.trim();
+      });
+      try {
+        localStorage.setItem('pandaDialogCopy', JSON.stringify(copy));
+      } catch {
+      }
+      applyCopy();
+      textEditor.close();
+    });
+
+    noBtn.addEventListener('click', handleNo);
+
+    function handleNo() {
+      const nextResponse = {
+        opening: 'sure',
+        sure: 'yes',
+        no: 'yes',
+        followup: 'noEnding',
+        yes: 'noEnding',
+        noEnding: 'finalQuestion',
+        finalQuestion: 'finalQuestion',
+      };
+      response = nextResponse[response];
+      applyCopy();
+    }
+
+    // Triggered when 'Yes' is clicked
+    function handleYes() {
+      const nextResponse = {
+        opening: 'followup',
+        sure: 'no',
+        no: 'noEnding',
+        followup: 'yes',
+        yes: 'yes',
+        noEnding: 'yes',
+        finalQuestion: 'yes',
+      };
+      response = nextResponse[response];
+      applyCopy();
+    }
+  </script>
+
+</body>
+</html>
